@@ -3,32 +3,70 @@
 const grpc = require('@grpc/grpc-js')
 const protoLoader = require('@grpc/proto-loader')
 const health = require('grpc-js-health-check')
-const opentelemetry = require('@opentelemetry/api')
+const { trace, context, SpanStatusCode } = require('@opentelemetry/api')
+
+const tracer = trace.getTracer('paymentservice')
 
 const charge = require('./charge')
 const logger = require('./logger')
 
 function chargeServiceHandler(call, callback) {
-  const span = opentelemetry.trace.getActiveSpan();
+  /**
+   * 1. Demo: Use the active span from context.
+   * Get the active span from the context.
+   * This span is the `rpc` span from the injected gRPC instrumentation 
+   * Use this span as the main span in the `chargeServiceHandler`
+   */
+  // const span = trace.getSpan(context.active())
 
-  try {
-    const amount = call.request.amount
-    span.setAttributes({
-      'app.payment.amount': parseFloat(`${amount.units}.${amount.nanos}`)
-    })
-    logger.info({ request: call.request }, "Charge request received.")
+  /**
+   * 2. Demo: Create a new span and link a parent span
+   * Get the active span from the context.
+   * Create a context and pass the parent span as a param when creating a new span
+   */
+  // const parent = trace.getActiveSpan()
+  // const ctx = trace.setSpan(context.active(), parent)
+  // const span = tracer.startSpan('chargeServiceHandler', undefined, ctx)
 
-    const response = charge.charge(call.request)
-    callback(null, response)
+  /**
+   * 3. Demo: Create a new active span without the need to pass a parent span
+   */
+  return tracer.startActiveSpan('chargeServiceHandler', span => {
+    try {
+      const amount = call.request.amount
 
-  } catch (err) {
-    logger.warn({ err })
+      /**
+       * 4. Demo: Add span attributes and events for custom test specs
+       */
+      span.setAttributes({
+        'app.payment.amount': parseFloat(`${amount.units}.${amount.nanos}`)
+      })
+      span.addEvent('Charge request received.', {
+        'log.severity': 'info',
+        'log.message': 'Charge request received.',
+        'request': call.request,
+      })
 
-    span.recordException(err)
-    span.setStatus({ code: opentelemetry.SpanStatusCode.ERROR })
+      const response = charge.charge(call.request)
 
-    callback(err)
-  }
+      span.setStatus({ code: SpanStatusCode.OK })
+      span.end()
+      callback(null, response)
+
+    } catch (err) {
+      span.addEvent('Charge request error.', {
+        'log.severity': 'warn',
+        'log.message': 'Charge request error.',
+        'error': err,
+      })
+
+      span.recordException(err)
+      span.setStatus({ code: SpanStatusCode.ERROR })
+
+      span.end()
+      callback(err)
+    }
+  })
 }
 
 async function closeGracefully(signal) {
