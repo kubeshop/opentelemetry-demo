@@ -9,7 +9,7 @@ spec:
   trigger:
     type: grpc
     grpc:
-      protobufFile: ../../../pb/demo.proto
+      protobufFile: ../../../../pb/demo.proto
       address: ${var:CART_SERVICE_ADDR}
       method: oteldemo.CartService.AddItem
       request: |-
@@ -33,3 +33,7 @@ spec:
     selector: span[tracetest.span.type="general" name="Tracetest trigger"]
     assertions:
     - "attr:tracetest.response.body = '{\n  \n}'"
+  outputs:
+  - name: productId
+    selector: span[name="oteldemo.CartService/AddItem"]
+    value: attr:app.product.id

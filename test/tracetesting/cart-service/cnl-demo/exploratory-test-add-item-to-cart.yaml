@@ -1,0 +1,22 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+type: Test
+spec:
+  id: cart-add-item-to-cart
+  name: 'Cart: add item to cart'
+  description: Add one item to the shopping cart
+  trigger:
+    type: grpc
+    grpc:
+      protobufFile: ../../../../pb/demo.proto
+      address: cartservice:7070 # ${var:CART_SERVICE_ADDR}
+      method: oteldemo.CartService.AddItem
+      request: |-
+        {
+          "userId": "1234",
+          "item": {
+            "productId": "OLJCESPC7Z",
+            "quantity": 1
+          }
+        }
