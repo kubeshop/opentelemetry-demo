@@ -14,7 +14,7 @@ spec:
       method: oteldemo.CartService.GetCart
       request: |-
         {
-             "userId": "1234"
+          "userId": "1234"
         }
   specs:
   - name: It retrieved the cart items correctly

@@ -33,7 +33,6 @@ const sdk = new opentelemetry.NodeSDK({
     gcpDetector
   ],
 })
-
 sdk.start()
 // Auto End
 

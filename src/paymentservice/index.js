@@ -4,7 +4,6 @@ const grpc = require('@grpc/grpc-js')
 const protoLoader = require('@grpc/proto-loader')
 const health = require('grpc-js-health-check')
 const { trace, context, SpanStatusCode } = require('@opentelemetry/api')
-
 const tracer = trace.getTracer('paymentservice')
 
 const charge = require('./charge')
@@ -31,42 +30,49 @@ function chargeServiceHandler(call, callback) {
   /**
    * 3. Demo: Create a new active span without the need to pass a parent span
    */
-  return tracer.startActiveSpan('chargeServiceHandler', span => {
-    try {
-      const amount = call.request.amount
+  // return tracer.startActiveSpan('chargeServiceHandler', span => {...})
 
-      /**
-       * 4. Demo: Add span attributes and events for custom test specs
-       */
-      span.setAttributes({
-        'app.payment.amount': parseFloat(`${amount.units}.${amount.nanos}`)
-      })
-      span.addEvent('Charge request received.', {
-        'log.severity': 'info',
-        'log.message': 'Charge request received.',
-        'request': call.request,
-      })
+  try {
+    const amount = call.request.amount
 
-      const response = charge.charge(call.request)
+    /**
+     * 1. Demo: Add span attributes and events for custom test specs
+     */
+    // span.setAttributes({
+    //   'app.payment.amount': parseFloat(`${amount.units}.${amount.nanos}`)
+    // })
+    // span.addEvent('Charge request received.', {
+    //   'log.severity': 'info',
+    //   'log.message': 'Charge request received.',
+    //   'request': call.request,
+    // })
 
-      span.setStatus({ code: SpanStatusCode.OK })
-      span.end()
-      callback(null, response)
+    const response = charge.charge(call.request)
 
-    } catch (err) {
-      span.addEvent('Charge request error.', {
-        'log.severity': 'warn',
-        'log.message': 'Charge request error.',
-        'error': err,
-      })
+    /**
+     * 1. Demo: Add span attributes and events for custom test specs
+     */
+    // span.setStatus({ code: SpanStatusCode.OK })
+    // span.end()
 
-      span.recordException(err)
-      span.setStatus({ code: SpanStatusCode.ERROR })
+    callback(null, response)
 
-      span.end()
-      callback(err)
-    }
-  })
+  } catch (err) {
+
+    /**
+     * 1. Demo: Add span attributes and events for custom test specs
+     */
+    // span.addEvent('Charge request error.', {
+    //   'log.severity': 'warn',
+    //   'log.message': 'Charge request error.',
+    //   'error': err,
+    // })
+    // span.recordException(err)
+    // span.setStatus({ code: SpanStatusCode.ERROR })
+    // span.end()
+
+    callback(err)
+  }
 }
 
 async function closeGracefully(signal) {
