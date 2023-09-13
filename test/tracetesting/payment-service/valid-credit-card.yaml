@@ -37,3 +37,7 @@ spec:
       selector: span[tracetest.span.type="general" name="Tracetest trigger"]
       assertions:
         - attr:tracetest.response.body | json_path '$.transactionId' != ""
+    - name: It should return a valid credit card
+      selector: span[tracetest.span.type="general" name="charge"]
+      assertions: 
+        - attr:app.payment.card_valid = "true"

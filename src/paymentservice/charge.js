@@ -32,7 +32,7 @@ module.exports.charge = request => {
   /**
    * 3. Demo: Create a new active span without the need to pass a parent span
    */
-  // const span = tracer.startSpan('charge')
+  const span = tracer.startSpan('charge')
 
   const {
     creditCardNumber: number,
@@ -50,10 +50,10 @@ module.exports.charge = request => {
   /**
    * 1. Demo: Add span attributes and events for custom test specs
    */
-  // span.setAttributes({
-  //   'app.payment.card_type': cardType,
-  //   'app.payment.card_valid': valid
-  // })
+  span.setAttributes({
+    'app.payment.card_type': cardType,
+    'app.payment.card_valid': valid
+  })
 
   if (!valid) {
     throw new Error('Credit card info is invalid.')
@@ -79,7 +79,7 @@ module.exports.charge = request => {
    * 1. Demo: Use the active span from context.
    * End the span.
    */
-  // span.end()
+  span.end()
 
   const { units, nanos, currencyCode } = request.amount
   logger.info({transactionId, cardType, lastFourDigits, amount: { units, nanos, currencyCode }}, "Transaction complete.")
